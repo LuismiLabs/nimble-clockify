@@ -45,19 +45,23 @@ python main.py --list-tags
 
 | Comando | Descripción |
 |--------|-------------|
+| `python main.py` | **Modo semanal**: pide descripción, sube desde el último día con horas hasta el viernes de esta semana (solo L–V, sin duplicar días que ya tengan entradas; feriados AR → Holiday). |
 | `python main.py --list` | Lista workspaces, proyectos y tags (para configurar nombres/IDs). |
 | `python main.py --list-tags` | Lista tags y comprueba que exista el tag de feriados. |
-| `python main.py --from YYYY-MM-DD --to YYYY-MM-DD --desc "Texto"` | Carga horas en el rango (solo L–V, feriados AR como Holiday). |
+| `python main.py --from YYYY-MM-DD --to YYYY-MM-DD --desc "Texto"` | Carga horas en el rango indicado (solo L–V, feriados AR como Holiday). |
 | `python main.py --from ... --to ... --desc "..." --dry-run` | Simula: muestra qué se crearía sin llamar a la API. |
 | `python main.py --from ... --to ... --desc "..." --include-weekends` | Incluye sábados y domingos en la carga. |
 
 ### Ejemplos
 
 ```bash
+# Modo semanal (cada viernes): solo ejecutar y responder "¿En qué trabajaste?"
+python main.py
+
 # Simular enero 2025
 python main.py --from 2025-01-01 --to 2025-01-31 --desc "Desarrollo PHP" --dry-run
 
-# Cargar horas de verdad
+# Cargar horas de verdad en un rango fijo
 python main.py --from 2025-01-01 --to 2025-01-31 --desc "Desarrollo PHP"
 ```
 
@@ -70,6 +74,19 @@ Para cada día del rango:
 - Si no es feriado → se usa tu `--desc` y el tag `TAG_NAME` (ej. `PHP`).
 
 Solo se procesan lunes a viernes salvo que uses `--include-weekends`.
+
+## Modo semanal (recomendado los viernes)
+
+Si ejecutas el script **sin argumentos** (`python main.py`):
+
+1. Te pregunta: **¿En qué trabajaste?** (esa descripción se usa para los días de trabajo).
+2. Busca en Clockify el **último día** en que ya tienes horas cargadas en este proyecto.
+3. Toma el **día siguiente** como inicio y el **viernes de la semana actual** como fin.
+4. De esos días, solo considera **lunes a viernes** y **omite los que ya tengan entradas** (no duplica).
+5. Para cada día a cargar: si es **feriado argentino** → descripción "Holiday" y tag Vacation/Holiday; si no → tu descripción y el tag normal (ej. PHP).
+6. Muestra un resumen y pide confirmación (**¿Crear estas entradas? [s/N]**) antes de crear.
+
+Así puedes correr el script cada viernes, contestar en qué trabajaste, y subir solo la semana sin tocar fechas ni duplicar días.
 
 ## Resumen en consola
 
