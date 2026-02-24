@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Wrapper para ejecutar clockify-nimble desde cualquier directorio.
-# Instalar: ln -sf "$(pwd)/bin/clockify-nimble" /usr/local/bin/clockify-nimble
+# Wrapper to run clockify-nimble from any directory.
+# Install: ln -sf "$(pwd)/bin/clockify-nimble" /usr/local/bin/clockify-nimble
 
 resolve_script() {
   local src="$1"
@@ -20,6 +20,6 @@ CLOCK_DIR=$(dirname "$BIN_DIR")
 PYTHON=""
 [ -x "$CLOCK_DIR/venv/bin/python" ] && PYTHON="$CLOCK_DIR/venv/bin/python"
 [ -x "$CLOCK_DIR/.venv/bin/python" ] && PYTHON="$CLOCK_DIR/.venv/bin/python"
-[ -z "$PYTHON" ] && { echo "No se encontró venv en $CLOCK_DIR (venv/ o .venv/)"; exit 1; }
+[ -z "$PYTHON" ] && { echo "venv not found in $CLOCK_DIR (venv/ or .venv/)"; exit 1; }
 
 exec "$PYTHON" "$CLOCK_DIR/main.py" "$@"

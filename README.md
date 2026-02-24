@@ -1,11 +1,11 @@
-# Clockify – Carga de horas L–V con feriados Argentina
+# Clockify – Log Mon–Fri hours with Argentina holidays
 
-Script en Python para cargar horas en [Clockify](https://clockify.me/) de lunes a viernes (o todos los días con opción), marcando automáticamente los **feriados argentinos** como "Holiday" con un tag de vacaciones.
+Python script to log hours to [Clockify](https://clockify.me/) for weekdays (Mon–Fri), or all days with an option. It automatically marks **Argentina public holidays** as "Holiday" with a vacation tag.
 
-## Requisitos
+## Requirements
 
-- Python 3.10+ (usa `zoneinfo`)
-- Dependencia: `requests`
+- Python 3.10+ (uses `zoneinfo`)
+- Dependency: `requests`
 
 ```bash
 python -m venv venv
@@ -13,132 +13,128 @@ source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install requests
 ```
 
-## Configuración
+## Setup
 
-1. **API Key de Clockify**  
-   En [Clockify → Profile → API](https://clockify.me/user/settings) genera una API key.  
-   - Opción A: Pégala en `main.py` en `API_KEY = "..."`.  
-   - Opción B (recomendada): no la pongas en el código y usa variable de entorno:
-     ```bash
-     export CLOCKIFY_API_KEY="tu_api_key"
-     ```
-   El script usa la variable de entorno si está definida.
+1. **Clockify API key**  
+   Generate an API key at [Clockify → Profile → API](https://clockify.me/user/settings).  
+   - Option A: Put it in a `.env` file in the project root: `CLOCKIFY_API_KEY=your_key`  
+   - Option B: Set the env var when running: `export CLOCKIFY_API_KEY="your_key"`  
+   The script loads `.env` automatically if present.
 
-2. **Workspace, proyecto y tags**  
-   Edita al inicio de `main.py`:
-   - `WORKSPACE_NAME`: nombre del workspace o `None` para usar el primero.
-   - `PROJECT_NAME`: nombre del proyecto (ej. `"NexStar"`).
-   - `TAG_NAME`: tag para trabajo normal (ej. `"PHP"`).
-   - `HOLIDAY_TAG_NAME`: tag para feriados (ej. `"Vacation/Holiday"`). Debe existir en Clockify.
-   - `TZ`, `START_TIME`, `END_TIME`: zona horaria y horario de la entrada (ej. 08:00–16:00).
+2. **Workspace, project, and tags**  
+   Edit the top of `main.py`:
+   - `WORKSPACE_NAME`: workspace name or `None` to use the first one
+   - `PROJECT_NAME`: project name (e.g. `"NexStar"`)
+   - `TAG_NAME`: tag for normal work (e.g. `"PHP"`)
+   - `HOLIDAY_TAG_NAME`: tag for holidays (e.g. `"Vacation/Holiday"`). Must exist in Clockify.
+   - `TZ`, `START_TIME`, `END_TIME`: timezone and entry time range (e.g. 08:00–16:00)
 
-Para ver nombres e IDs correctos:
+To see the correct names and IDs:
 
 ```bash
 python main.py --list
 python main.py --list-tags
 ```
 
-`--list-tags` además valida que exista el tag de feriados (`HOLIDAY_TAG_NAME`).
+`--list-tags` also checks that the holiday tag (`HOLIDAY_TAG_NAME`) exists.
 
-## Comando global: `clockify-nimble`
+## Global command: `clockify-nimble`
 
-Para ejecutar el script desde cualquier carpeta sin hacer `cd` al proyecto:
+To run the script from any directory without `cd`-ing into the project:
 
-1. Crea el enlace en tu PATH (solo una vez):
+1. Add the wrapper to your PATH (once):
 
    ```bash
-   cd /Users/luisjimenez/Documents/nexstar/clock
+   cd /path/to/clock
    ln -sf "$(pwd)/bin/clockify-nimble" /usr/local/bin/clockify-nimble
    ```
 
-   Si prefieres usar `~/bin`:
+   Or use `~/bin`:
 
    ```bash
    mkdir -p ~/bin
    ln -sf "$(pwd)/bin/clockify-nimble" ~/bin/clockify-nimble
    ```
 
-   Asegúrate de tener `~/bin` en tu PATH (en `~/.zshrc`: `export PATH="$HOME/bin:$PATH"`).
+   Ensure `~/bin` is in your PATH (e.g. in `~/.zshrc`: `export PATH="$HOME/bin:$PATH"`).
 
-2. Desde cualquier terminal:
+2. From any terminal:
 
    ```bash
-   clockify-nimble              # modo semanal (pide descripción)
-   clockify-nimble --list-tags  # listar tags
-   clockify-nimble --from 2025-01-01 --to 2025-01-31 --desc "Trabajo" --dry-run
+   clockify-nimble              # weekly mode (asks for description)
+   clockify-nimble --list-tags  # list tags
+   clockify-nimble --from 2025-01-01 --to 2025-01-31 --desc "Work" --dry-run
    ```
 
-El wrapper usa el `venv` o `.venv` del proyecto y el `.env` del mismo directorio, así que no hace falta activar el entorno ni estar en la carpeta del repo.
+The wrapper uses the project’s `venv` or `.venv` and the project’s `.env`, so you don’t need to activate the env or be in the repo folder.
 
-## Comandos
+## Commands
 
-| Comando | Descripción |
+| Command | Description |
 |--------|-------------|
-| `python main.py` | **Modo semanal**: pide descripción, sube desde el último día con horas hasta el viernes de esta semana (solo L–V, sin duplicar días que ya tengan entradas; feriados AR → Holiday). |
-| `python main.py --list` | Lista workspaces, proyectos y tags (para configurar nombres/IDs). |
-| `python main.py --list-tags` | Lista tags y comprueba que exista el tag de feriados. |
-| `python main.py --from YYYY-MM-DD --to YYYY-MM-DD --desc "Texto"` | Carga horas en el rango indicado (solo L–V, feriados AR como Holiday). |
-| `python main.py --from ... --to ... --desc "..." --dry-run` | Simula: muestra qué se crearía sin llamar a la API. |
-| `python main.py --from ... --to ... --desc "..." --include-weekends` | Incluye sábados y domingos en la carga. |
+| `python main.py` | **Weekly mode**: asks for description, creates entries from the last day with hours to this week’s Friday (Mon–Fri only, skips days that already have entries; Argentina holidays → Holiday). |
+| `python main.py --list` | List workspaces, projects, and tags (to configure names/IDs). |
+| `python main.py --list-tags` | List tags and validate that the holiday tag exists. |
+| `python main.py --from YYYY-MM-DD --to YYYY-MM-DD --desc "Text"` | Create entries in the given range (Mon–Fri only; Argentina holidays as Holiday). |
+| `python main.py --from ... --to ... --desc "..." --dry-run` | Dry run: show what would be created without calling the API. |
+| `python main.py --from ... --to ... --desc "..." --include-weekends` | Include Saturdays and Sundays. |
 
-### Ejemplos
+### Examples
 
 ```bash
-# Modo semanal (cada viernes): solo ejecutar y responder "¿En qué trabajaste?"
+# Weekly mode (e.g. every Friday): just run and answer "What did you work on?"
 python main.py
 
-# Simular enero 2025
-python main.py --from 2025-01-01 --to 2025-01-31 --desc "Desarrollo PHP" --dry-run
+# Dry run for January 2025
+python main.py --from 2025-01-01 --to 2025-01-31 --desc "PHP development" --dry-run
 
-# Cargar horas de verdad en un rango fijo
-python main.py --from 2025-01-01 --to 2025-01-31 --desc "Desarrollo PHP"
+# Actually create entries for a range
+python main.py --from 2025-01-01 --to 2025-01-31 --desc "PHP development"
 ```
 
-## Feriados Argentina
+## Argentina holidays
 
-Se usa la API pública [ArgentinaDatos](https://api.argentinadatos.com/v1/feriados) (sin API key).  
-Para cada día del rango:
+The script uses the public [ArgentinaDatos](https://api.argentinadatos.com/v1/feriados) API (no API key). For each day in the range:
 
-- Si es **feriado argentino** → se crea la entrada con descripción **"Holiday"** y el tag configurado en `HOLIDAY_TAG_NAME` (ej. `Vacation/Holiday`).
-- Si no es feriado → se usa tu `--desc` y el tag `TAG_NAME` (ej. `PHP`).
+- If it’s an **Argentina public holiday** → the entry is created with description **"Holiday"** and the tag set in `HOLIDAY_TAG_NAME` (e.g. `Vacation/Holiday`).
+- Otherwise → your `--desc` and `TAG_NAME` (e.g. `PHP`) are used.
 
-Solo se procesan lunes a viernes salvo que uses `--include-weekends`.
+Only weekdays are processed unless you use `--include-weekends`.
 
-## Modo semanal (recomendado los viernes)
+## Weekly mode (recommended on Fridays)
 
-Si ejecutas el script **sin argumentos** (`python main.py`):
+If you run the script **with no arguments** (`python main.py`):
 
-1. Te pregunta: **¿En qué trabajaste?** (esa descripción se usa para los días de trabajo).
-2. Busca en Clockify el **último día** en que ya tienes horas cargadas en este proyecto.
-3. Toma el **día siguiente** como inicio y el **viernes de la semana actual** como fin.
-4. De esos días, solo considera **lunes a viernes** y **omite los que ya tengan entradas** (no duplica).
-5. Para cada día a cargar: si es **feriado argentino** → descripción "Holiday" y tag Vacation/Holiday; si no → tu descripción y el tag normal (ej. PHP).
-6. Muestra un resumen y pide confirmación (**¿Crear estas entradas? [s/N]**) antes de crear.
+1. It asks: **What did you work on?** (that description is used for work days).
+2. It finds in Clockify the **last day** you already have entries for in this project.
+3. It uses the **next day** as start and **this week’s Friday** as end.
+4. Of those days, it only considers **Mon–Fri** and **skips days that already have entries** (no duplicates).
+5. For each day to create: if it’s an **Argentina holiday** → description "Holiday" and Vacation/Holiday tag; otherwise → your description and the normal tag (e.g. PHP).
+6. It shows a summary and asks for confirmation (**Create these entries? [y/N]**) before creating.
 
-Así puedes correr el script cada viernes, contestar en qué trabajaste, y subir solo la semana sin tocar fechas ni duplicar días.
+So you can run the script every Friday, answer what you worked on, and upload only the missing week without touching dates or duplicating days.
 
-## Resumen en consola
+## Console summary
 
-Antes de crear entradas se muestra un resumen con:
+Before creating entries, a summary is shown with:
 
-- Rango de fechas
-- Días a cargar (trabajo + feriados AR)
-- Horas por día y total
-- Si se incluyen fines de semana
+- Date range
+- Days to create (work + Argentina holidays)
+- Hours per day and total
+- Whether weekends are included
 
-## Estructura del repo
+## Repo structure
 
 ```
 clock/
 ├── bin/
-│   └── clockify-nimble   # Wrapper para comando global
-├── main.py               # Script principal
-├── README.md             # Esta documentación
-├── .gitignore            # Ignora venv, __pycache__, .env, etc.
-└── venv/ o .venv/        # Entorno virtual (ignorado por git)
+│   └── clockify-nimble   # Wrapper for global command
+├── main.py               # Main script
+├── README.md             # This documentation
+├── .gitignore            # Ignores venv, __pycache__, .env, etc.
+└── venv/ or .venv/       # Virtual env (ignored by git)
 ```
 
-## Seguridad
+## Security
 
-- No subas tu API key a un repo público. Usa `CLOCKIFY_API_KEY` en el entorno o un archivo local que esté en `.gitignore` (ej. `.env`).
+- Do not commit your API key to a public repo. Use the `CLOCKIFY_API_KEY` env var or a local file listed in `.gitignore` (e.g. `.env`).
