@@ -23,7 +23,8 @@ pip install requests
    cp .env.example .env
    ```
 
-   Then edit `.env` and fill in your values:
+   Then edit `.env` and fill in your values. You can get your Clockify API key from  
+   **Clockify → Profile → API** (`https://app.clockify.me/user/settings`):
 
    ```env
    CLOCKIFY_API_KEY=your_clockify_api_key_here
