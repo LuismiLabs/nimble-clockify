@@ -15,13 +15,13 @@ pip install requests
 
 ## Setup
 
-1. **Clockify API key**  
-   Generate an API key at [Clockify → Profile → API](https://clockify.me/user/settings).  
-   - Option A: Put it in a `.env` file in the project root: `CLOCKIFY_API_KEY=your_key`  
-   - Option B: Set the env var when running: `export CLOCKIFY_API_KEY="your_key"`  
+1. **Clockify API key**
+   Generate an API key at [Clockify → Profile → API](https://app.clockify.me/manage-api-keys).
+   - Option A: Put it in a `.env` file in the project root: `CLOCKIFY_API_KEY=your_key`
+   - Option B: Set the env var when running: `export CLOCKIFY_API_KEY="your_key"`
    The script loads `.env` automatically if present.
 
-2. **Workspace, project, and tags**  
+2. **Workspace, project, and tags**
    Edit the top of `main.py`:
    - `WORKSPACE_NAME`: workspace name or `None` to use the first one
    - `PROJECT_NAME`: project name (e.g. `"NexStar"`)
