@@ -41,6 +41,36 @@ python main.py --list-tags
 
 `--list-tags` además valida que exista el tag de feriados (`HOLIDAY_TAG_NAME`).
 
+## Comando global: `clockify-nimble`
+
+Para ejecutar el script desde cualquier carpeta sin hacer `cd` al proyecto:
+
+1. Crea el enlace en tu PATH (solo una vez):
+
+   ```bash
+   cd /Users/luisjimenez/Documents/nexstar/clock
+   ln -sf "$(pwd)/bin/clockify-nimble" /usr/local/bin/clockify-nimble
+   ```
+
+   Si prefieres usar `~/bin`:
+
+   ```bash
+   mkdir -p ~/bin
+   ln -sf "$(pwd)/bin/clockify-nimble" ~/bin/clockify-nimble
+   ```
+
+   Asegúrate de tener `~/bin` en tu PATH (en `~/.zshrc`: `export PATH="$HOME/bin:$PATH"`).
+
+2. Desde cualquier terminal:
+
+   ```bash
+   clockify-nimble              # modo semanal (pide descripción)
+   clockify-nimble --list-tags  # listar tags
+   clockify-nimble --from 2025-01-01 --to 2025-01-31 --desc "Trabajo" --dry-run
+   ```
+
+El wrapper usa el `venv` o `.venv` del proyecto y el `.env` del mismo directorio, así que no hace falta activar el entorno ni estar en la carpeta del repo.
+
 ## Comandos
 
 | Comando | Descripción |
@@ -101,10 +131,12 @@ Antes de crear entradas se muestra un resumen con:
 
 ```
 clock/
-├── main.py      # Script principal
-├── README.md    # Esta documentación
-├── .gitignore   # Ignora venv, __pycache__, .env, etc.
-└── venv/        # Entorno virtual (ignorado por git)
+├── bin/
+│   └── clockify-nimble   # Wrapper para comando global
+├── main.py               # Script principal
+├── README.md             # Esta documentación
+├── .gitignore            # Ignora venv, __pycache__, .env, etc.
+└── venv/ o .venv/        # Entorno virtual (ignorado por git)
 ```
 
 ## Seguridad
