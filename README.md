@@ -15,19 +15,44 @@ pip install requests
 
 ## Setup
 
-1. **Clockify API key**
-   Generate an API key at [Clockify → Profile → API](https://app.clockify.me/manage-api-keys).
-   - Option A: Put it in a `.env` file in the project root: `CLOCKIFY_API_KEY=your_key`
-   - Option B: Set the env var when running: `export CLOCKIFY_API_KEY="your_key"`
-   The script loads `.env` automatically if present.
+1. **Environment file (`.env`)**
 
-2. **Workspace, project, and tags**
-   Edit the top of `main.py`:
-   - `WORKSPACE_NAME`: workspace name or `None` to use the first one
-   - `PROJECT_NAME`: project name (e.g. `"NexStar"`)
-   - `TAG_NAME`: tag for normal work (e.g. `"PHP"`)
-   - `HOLIDAY_TAG_NAME`: tag for holidays (e.g. `"Vacation/Holiday"`). Must exist in Clockify.
-   - `TZ`, `START_TIME`, `END_TIME`: timezone and entry time range (e.g. 08:00–16:00)
+   There is a template in `.env.example`. To get started:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Then edit `.env` and fill in your values:
+
+   ```env
+   CLOCKIFY_API_KEY=your_clockify_api_key_here
+
+   # Optional: workspace and project configuration
+   # If CLOCKIFY_WORKSPACE_NAME is empty, the first workspace will be used.
+   CLOCKIFY_WORKSPACE_NAME=Your Workspace Name
+   CLOCKIFY_PROJECT_NAME=NexStar
+   CLOCKIFY_TAG_NAME=PHP
+   CLOCKIFY_HOLIDAY_TAG_NAME=Vacation/Holiday
+
+   # Timezone and working hours
+   CLOCKIFY_TZ=America/Bogota
+   CLOCKIFY_START_TIME=08:00
+   CLOCKIFY_END_TIME=16:00
+   ```
+
+   The script automatically loads `.env` on startup, so you don’t need to export these manually.
+
+2. **Configure via env vars (optional)**
+
+   If you prefer, you can set any of these as real env vars instead of using `.env`, for example:
+
+   ```bash
+   export CLOCKIFY_API_KEY="your_key"
+   export CLOCKIFY_PROJECT_NAME="NexStar"
+   ```
+
+   Env vars override the defaults in `main.py`.
 
 To see the correct names and IDs:
 

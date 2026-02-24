@@ -22,14 +22,14 @@ API = "https://api.clockify.me/api/v1"
 # API Key: CLOCKIFY_API_KEY env var or .env file (do not commit the real key)
 API_KEY = os.environ.get("CLOCKIFY_API_KEY", "PUT_YOUR_API_KEY_HERE")
 
-# Fixed configuration
-WORKSPACE_NAME = None  # or set to a specific workspace name
-PROJECT_NAME = "NexStar"
-TAG_NAME = "PHP"
-HOLIDAY_TAG_NAME = "Vacation/Holiday"  # tag for holiday days (Argentina)
-TZ = "America/Bogota"
-START_TIME = "08:00"
-END_TIME = "16:00"
+# Fixed configuration (can be overridden via env/.env)
+WORKSPACE_NAME = os.environ.get("CLOCKIFY_WORKSPACE_NAME") or None
+PROJECT_NAME = os.environ.get("CLOCKIFY_PROJECT_NAME", "NexStar")
+TAG_NAME = os.environ.get("CLOCKIFY_TAG_NAME", "PHP")
+HOLIDAY_TAG_NAME = os.environ.get("CLOCKIFY_HOLIDAY_TAG_NAME", "Vacation/Holiday")  # tag for holiday days (Argentina)
+TZ = os.environ.get("CLOCKIFY_TZ", "America/Bogota")
+START_TIME = os.environ.get("CLOCKIFY_START_TIME", "08:00")
+END_TIME = os.environ.get("CLOCKIFY_END_TIME", "16:00")
 BILLABLE = True
 
 # Argentina holidays API (no API key required)
