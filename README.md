@@ -149,18 +149,94 @@ Before creating entries, a summary is shown with:
 - Hours per day and total
 - Whether weekends are included
 
+## AI Agent — `clockify-auto.py` (OpenClaw / non-interactive mode)
+
+`clockify-auto.py` is a companion script designed for use with AI agents like [OpenClaw](https://openclaw.dev). It exposes the same core logic as `main.py` but through a fully non-interactive CLI — no prompts, no confirmations in the script itself. The agent handles the conversation flow and calls this script at each step.
+
+### Commands
+
+| Command | Description |
+|---------|-------------|
+| `python clockify-auto.py status` | Show pending days since the last Clockify entry. No description needed. |
+| `python clockify-auto.py preview --desc "..."` | Show what would be created (dry run) — single description for all pending days. |
+| `python clockify-auto.py preview --entries '[...]'` | Show plan with different descriptions per date range. |
+| `python clockify-auto.py create --desc "..."` | Create entries with a single description for all pending workdays. |
+| `python clockify-auto.py create --entries '[...]'` | Create entries with per-range descriptions. |
+
+### `--entries` format
+
+A JSON array where each element covers a date range:
+
+```json
+[
+  {"from": "2026-04-14", "to": "2026-04-16", "desc": "Bug fixes"},
+  {"from": "2026-04-17", "to": "2026-04-18", "desc": "Feature development"}
+]
+```
+
+Ranges must cover all pending workdays. The script will report an error if any day is missing a description.
+
+### Examples
+
+```bash
+# See what's pending
+python clockify-auto.py status
+
+# Preview all pending days with a single description
+python clockify-auto.py preview --desc "NexStar development"
+
+# Preview with different descriptions per week
+python clockify-auto.py preview --entries '[{"from":"2026-04-07","to":"2026-04-11","desc":"Bug fixes"},{"from":"2026-04-14","to":"2026-04-18","desc":"Feature dev"}]'
+
+# Actually create entries
+python clockify-auto.py create --desc "NexStar development"
+```
+
+### OpenClaw skill
+
+If you use [OpenClaw](https://openclaw.dev), drop `clockify-auto.py` in this repo and create the skill file at `workspace/skills/clockify/SKILL.md` in your OpenClaw workspace:
+
+```markdown
+---
+name: clockify
+description: Log weekly hours to Clockify. Handles the full flow: check pending days, parse what the user worked on, preview, confirm, and upload.
+---
+
+# clockify — weekly hours
+
+**Script:** `/path/to/nimble-clockify/clockify-auto.py`
+
+## When to activate
+When the user says: "log my hours", "clockify", "upload this week", "I worked on X this week"
+
+## Flow
+1. Run `python clockify-auto.py status` — show pending days
+2. Ask what the user worked on (if not already provided)
+3. Run `preview` with the description(s) — show the plan
+4. Ask for confirmation: "Hours will look like this: [...]. Approve?"
+5. If confirmed, run `create` with the same arguments
+
+## Input formats accepted
+- `"Worked on X"` → single description for all days (`--desc "X"`)
+- `"Mon–Wed on X, Thu–Fri on Y"` → build `--entries` JSON with date ranges
+```
+
+The agent then handles the full conversation: asking what you worked on, showing a preview, waiting for your approval, and uploading — all from a single natural language message.
+
 ## Repo structure
 
 ```
-clock/
+nimble-clockify/
 ├── bin/
-│   └── clockify-nimble   # Wrapper for global command
-├── main.py               # Main script
-├── README.md             # This documentation
-├── .gitignore            # Ignores venv, __pycache__, .env, etc.
-└── venv/ or .venv/       # Virtual env (ignored by git)
+│   └── clockify-nimble     # Wrapper for global command
+├── main.py                 # Interactive script (manual use)
+├── clockify-auto.py        # Non-interactive script (AI agent use)
+├── .env.example            # Environment template (copy to .env)
+├── README.md               # This documentation
+└── .gitignore              # Ignores venv, __pycache__, .env, etc.
 ```
 
 ## Security
 
-- Do not commit your API key to a public repo. Use the `CLOCKIFY_API_KEY` env var or a local file listed in `.gitignore` (e.g. `.env`).
+- Do not commit your API key to a public repo. Use the `CLOCKIFY_API_KEY` env var or a local `.env` file (already listed in `.gitignore`).
+- Copy `.env.example` to `.env` and fill in your values — the `.env` file is never committed.
