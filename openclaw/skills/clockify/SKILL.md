@@ -87,24 +87,76 @@ Argentina holidays are detected automatically by the script. Per Nimble rules th
 - **Tag:** Holiday
 - **Description:** e.g. `"Public holiday — Argentina"`
 
-The script maps these to the holiday tag configured in `.env` (`CLOCKIFY_HOLIDAY_TAG_NAME=Holiday`).
+The script auto-sets **Activity: PTO** + **Tag: Holiday** + holiday description.
 
 ---
 
-## What this script automates vs. what the user must set in Clockify
+## Clockify structure: Client → Project → Activity
 
-The script handles **bulk weekday logging** for a single Client/Project configured in `.env`:
+In Clockify, **Activities** are **Tasks** under a Project (under a Client). Example for NexStar:
 
-| Automated by script | User/agent must handle manually or in Clockify |
-|---------------------|-----------------------------------------------|
-| Detect pending weekdays since last entry | Multiple clients in the same day |
-| Argentina holiday detection → Holiday tag | Choosing the correct **Activity** per entry |
-| Single description (or per-range descriptions) | Splitting day into multiple entries (meetings vs work) |
-| Preview → confirm → create flow | PTO / UTO / Idle days (HR-authorized) |
-| Skip days that already have entries | **Other** activity entries (description required) |
-| | Overtime tag on authorized extra hours |
+```
+CLIENT: NEXSTAR MEDIA INC
+  PROJECT: NexStar
+    ACTIVITY: Meetings
+    ACTIVITY: Other
+    ACTIVITY: Working Time
+```
 
-If the user's week is more complex than "same client, same activity all week", help them structure separate `--entries` ranges **and** tell them which days may still need manual entries in Clockify for meetings, Other, or a second client.
+Configure in `.env`:
+```env
+CLOCKIFY_CLIENT_NAME=Nexstar Media Inc
+CLOCKIFY_PROJECT_NAME=NexStar
+CLOCKIFY_ACTIVITY_NAME=Working Time
+CLOCKIFY_PTO_ACTIVITY_NAME=PTO
+```
+
+Run **discover** to list the user's actual hierarchy and tags:
+```
+cd /path/to/nimble-clockify && python3 clockify-auto.py discover
+```
+
+---
+
+## Automatic tag guessing
+
+The script and agent **infer tags from context** — no need to ask the user for a tag on normal workdays.
+
+| Situation | Tag (auto) | Activity (auto) |
+|-----------|------------|-----------------|
+| Normal client work | *(none)* | Working Time |
+| User mentions meetings / standup / demo | *(none)* | Meetings |
+| User mentions "other" / misc admin | *(none)* | Other |
+| Argentina public holiday | **Holiday** | PTO |
+| User says vacation / PTO / day off | **Vacation** | PTO |
+| User says sick / doctor / personal day | **Personal** | PTO |
+| User says overtime / extra hours (authorized) | **Additional Work (Authorized Overtime)** | Working Time (or as specified) |
+
+**Agent rules for tag guessing:**
+1. Parse the user's message for keywords before building `--entries`.
+2. If unsure between Vacation vs Personal, **ask**: "Was that vacation or a sick/personal day?"
+3. Never add a tag on regular work entries unless overtime is mentioned.
+4. You can override in `--entries` with explicit `"tag"` and `"activity"` fields.
+
+**Keyword hints:**
+- Vacation: `vacation`, `vacaciones`, `pto`, `day off`, `annual leave`
+- Personal: `sick`, `doctor`, `medical`, `personal day`, `family`
+- Overtime: `overtime`, `extra hours`, `authorized overtime`
+- Meetings: `meeting`, `standup`, `demo`, `call`, `sync`, `retro`
+
+---
+
+## What this script automates
+
+| Automated | Still manual / agent judgment |
+|-----------|------------------------------|
+| Client + Project from `.env` | Multiple clients same day |
+| Activity (task) inferred from description | Splitting one day into multiple entries |
+| Tag inferred for PTO/holidays/overtime | UTO / Idle (HR-authorized) |
+| Argentina holidays → PTO + Holiday | Second client entries |
+| Preview shows activity + tag per day | Complex weeks with mixed activities per day |
+
+If the week is complex, use `--entries` with explicit `"activity"` and `"tag"` per range, or tell the user which days need manual Clockify entries.
 
 ---
 
@@ -119,6 +171,15 @@ Activate when the user says things like:
 ---
 
 ## Full flow (always follow this order)
+
+### Step 0 — Discover structure (first time or if config errors)
+
+If `.env` is new, tags are missing, or project/activity lookup fails:
+```
+cd /path/to/nimble-clockify && python3 clockify-auto.py discover
+```
+
+Show the user their Client → Project → Activity tree and confirm all 4 Nimble tags exist. Update `.env` with the correct `CLOCKIFY_CLIENT_NAME`, `CLOCKIFY_PROJECT_NAME`, and `CLOCKIFY_ACTIVITY_NAME`.
 
 ### Step 1 — Check status
 
@@ -155,10 +216,27 @@ Otherwise ask:
 
 ### Step 3 — Build the command and preview
 
+**Always use `--verbose` on preview** so the user can verify client, project, activity (`taskId`), tag, and the exact API payload before creating.
+
 **Simple case** (same description for all workdays):
 ```
-cd /path/to/nimble-clockify && python3 clockify-auto.py preview --desc "NexStar — widget refactor"
+cd /path/to/nimble-clockify && python3 clockify-auto.py preview --desc "NexStar — widget refactor" --verbose
 ```
+
+Each day in verbose preview shows:
+```
+  Wednesday 2026-06-10
+    client:      Nexstar Media Inc
+    project:     NexStar (id: ...)
+    activity:    Working Time (taskId: ...)
+    tag:         (none)
+    description: NexStar — widget refactor
+    time:        2026-06-10 08:00 → 2026-06-10 16:00 (America/Bogota)
+    API payload:
+    { "projectId": "...", "taskId": "...", "description": "...", ... }
+```
+
+If `taskId: MISSING` appears, run `discover` and fix `.env` or override `project`/`activity` in the plan file (see below).
 
 **Multi-range case** (build JSON with date ranges):
 
@@ -166,29 +244,62 @@ The `--entries` JSON is an array where each element has:
 - `"from"`: date YYYY-MM-DD (first day of range)
 - `"to"`: date YYYY-MM-DD (last day of range)
 - `"desc"`: description for those days
+- `"activity"`: optional — `Working Time`, `Meetings`, `Other`, `PTO` (auto-guessed if omitted)
+- `"tag"`: optional — `Vacation`, `Holiday`, `Personal`, `Additional Work (Authorized Overtime)` (auto-guessed if omitted)
 
-Example: "Mon–Wed on bug fixes, Thu–Fri on features"
+Example: "Mon–Wed on bug fixes, Thu was meetings, Fri overtime"
 ```
-cd /path/to/nimble-clockify && python3 clockify-auto.py preview --entries '[{"from":"2026-06-09","to":"2026-06-11","desc":"Bug fixes — NexStar"},{"from":"2026-06-12","to":"2026-06-13","desc":"Feature development — NexStar"}]'
+cd /path/to/nimble-clockify && python3 clockify-auto.py preview --entries '[{"from":"2026-06-09","to":"2026-06-11","desc":"Bug fixes — NexStar"},{"from":"2026-06-12","to":"2026-06-12","desc":"Client standup and planning","activity":"Meetings"},{"from":"2026-06-13","to":"2026-06-13","desc":"Authorized overtime — release fix","tag":"Additional Work (Authorized Overtime)"}]'
 ```
 
 **Note:** Ranges in `--entries` must cover ALL pending **work** days. Argentina holidays are handled automatically and do not need a description in `--entries`.
 
+### Step 3b — Editable week plan (when days need different activities/tags)
+
+When the user wants to tweak individual days (e.g. Thu = Meetings, Fri = Other), export a plan, let them edit it, then preview again:
+
+```
+cd /path/to/nimble-clockify && python3 clockify-auto.py plan --desc "NexStar — widget refactor" -o week-plan.json
+```
+
+The user (or agent) edits `week-plan.json`. Each day supports:
+
+| Field | Example values |
+|-------|----------------|
+| `desc` | `"Client standup and planning"` |
+| `activity` | `Working Time`, `Meetings`, `Other`, `PTO` |
+| `tag` | `null`, `Vacation`, `Holiday`, `Personal`, `Additional Work (Authorized Overtime)` |
+| `project` | `NexStar` (override if needed) |
+| `client` | `Nexstar Media Inc` (override if needed) |
+
+Then dry-run from the edited file:
+```
+cd /path/to/nimble-clockify && python3 clockify-auto.py preview --plan-file week-plan.json --verbose
+```
+
+Create after approval:
+```
+cd /path/to/nimble-clockify && python3 clockify-auto.py create --plan-file week-plan.json
+```
+
+**CLI equivalent** (`main.py`):
+```
+python main.py --plan --from 2026-06-10 --to 2026-06-12 --desc "..." -o week-plan.json
+python main.py --from 2026-06-10 --to 2026-06-12 --plan-file week-plan.json --dry-run --verbose
+python main.py --from 2026-06-10 --to 2026-06-12 --plan-file week-plan.json
+```
+
 ### Step 4 — Show preview and ask for confirmation
 
-Present the preview clearly. Include Nimble context:
+Present the **verbose preview output** clearly. Include per-day client, project, activity, tag, and flag any `taskId: MISSING` or `⚠️` warnings.
 
-> **Preview — Clockify**
+> **Preview — Clockify (dry run)**
 >
-> Client/Project: (from your `.env` config)  
-> Default activity assumed: **Working Time** (no tag)
->
-> | Day | Description | Notes |
-> |-----|-------------|-------|
-> | Mon 06/09 | Bug fixes — NexStar | Working Time |
-> | Tue 06/10 | Bug fixes — NexStar | Working Time |
-> | Wed 06/11 | Public holiday | PTO + Holiday tag |
-> | … | … | … |
+> | Day | Client / Project | Activity | Tag | Description |
+> |-----|------------------|----------|-----|-------------|
+> | Wed 06/10 | Nexstar Media Inc / NexStar | Working Time | — | Bug fixes — NexStar |
+> | Thu 06/11 | Nexstar Media Inc / NexStar | Meetings | — | Client standup |
+> | Fri 06/12 | Nexstar Media Inc / NexStar | Working Time | — | Release fix |
 >
 > Total: X days · Y.YY hours
 >
@@ -200,28 +311,30 @@ Wait for the user's response. If they say yes (any variant: "yes", "ok", "approv
 
 ### Step 5 — Create entries
 
-Replace `preview` with `create` using the same arguments:
+Replace `preview` with `create` using the **same arguments** (including `--plan-file` if used):
 ```
 cd /path/to/nimble-clockify && python3 clockify-auto.py create --desc "..."
 # or
 cd /path/to/nimble-clockify && python3 clockify-auto.py create --entries '[...]'
+# or
+cd /path/to/nimble-clockify && python3 clockify-auto.py create --plan-file week-plan.json
 ```
 
 Show the final confirmation with total hours created.
 
-Remind the user to verify in Clockify that:
-- Activities are correct (script sets description only; Activity may need adjustment in Clockify if not mapped by project)
-- Any PTO/UTO/Idle/meeting/overtime days were logged separately
-- Every weekday in the week is covered
+Remind the user to verify in Clockify that every weekday is covered and activities/tags look correct in the preview output.
 
 ---
 
 ## Important notes
 
 - **Never create without confirmation.** Always: preview → approval → create.
-- If the script fails (API error, tag not found, etc.), show the exact error message.
-- **Argentina public holidays** → logged with Holiday tag (configure `CLOCKIFY_HOLIDAY_TAG_NAME=Holiday` in `.env`).
-- **Work entries** → no tag required per new Nimble rules. Leave `CLOCKIFY_TAG_NAME` empty or unset if your workspace no longer uses work tags.
+- If the script fails (API error, tag not found, activity not found), run `discover` and fix `.env`.
+- **Argentina public holidays** → Activity PTO + Tag Holiday (auto).
+- **Work entries** → no tag unless overtime is detected.
+- **Always preview with `--verbose`** — shows client, project, activity (`taskId`), tag, and full API JSON per day.
+- Use `plan` → edit `week-plan.json` → `preview --plan-file --verbose` when days need different activities/tags.
+- PTO lives on a different project for some users (e.g. Nimble `Internal`); set `CLOCKIFY_PTO_PROJECT_NAME` in `.env` if holidays show `taskId: MISSING` for PTO.
 - Date range is always: (last day with entries + 1) → this week's Friday.
 - The script cannot skip individual workdays — all pending days get an entry. If the user didn't work a specific day (PTO/sick/bench), they must log that day manually in Clockify with the correct Activity instead of using this script for that day.
 - The script reads `.env` from the project directory. If the API key fails, check that file.

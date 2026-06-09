@@ -28,15 +28,13 @@ pip install requests
 
    ```env
    CLOCKIFY_API_KEY=your_clockify_api_key_here
-
-   # Optional: workspace and project configuration
-   # If CLOCKIFY_WORKSPACE_NAME is empty, the first workspace will be used.
    CLOCKIFY_WORKSPACE_NAME=Your Workspace Name
+   CLOCKIFY_CLIENT_NAME=Nexstar Media Inc
    CLOCKIFY_PROJECT_NAME=NexStar
-   CLOCKIFY_TAG_NAME=PHP
-   CLOCKIFY_HOLIDAY_TAG_NAME=Vacation/Holiday
-
-   # Timezone and working hours
+   CLOCKIFY_ACTIVITY_NAME=Working Time
+   CLOCKIFY_PTO_PROJECT_NAME=          # optional; holidays use this if set
+   CLOCKIFY_PTO_ACTIVITY_NAME=PTO
+   CLOCKIFY_HOLIDAY_DESCRIPTION=Public holiday — Argentina
    CLOCKIFY_TZ=America/Bogota
    CLOCKIFY_START_TIME=08:00
    CLOCKIFY_END_TIME=16:00
@@ -58,11 +56,10 @@ pip install requests
 To see the correct names and IDs:
 
 ```bash
+python main.py --discover    # Client → Project → Activity + Nimble tags
 python main.py --list
-python main.py --list-tags
+python main.py --list-tags   # validates all 4 Nimble tags exist
 ```
-
-`--list-tags` also checks that the holiday tag (`HOLIDAY_TAG_NAME`) exists.
 
 ## Global command: `clockify-nimble`
 
