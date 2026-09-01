@@ -49,9 +49,11 @@ API_KEY = os.environ.get("CLOCKIFY_API_KEY", "PUT_YOUR_API_KEY_HERE")
 WORKSPACE_NAME = os.environ.get("CLOCKIFY_WORKSPACE_NAME") or None
 CLIENT_NAME = os.environ.get("CLOCKIFY_CLIENT_NAME") or None
 PROJECT_NAME = os.environ.get("CLOCKIFY_PROJECT_NAME", "NexStar")
+PTO_CLIENT_NAME = os.environ.get("CLOCKIFY_PTO_CLIENT_NAME") or None
 PTO_PROJECT_NAME = os.environ.get("CLOCKIFY_PTO_PROJECT_NAME") or None
 ACTIVITY_NAME = os.environ.get("CLOCKIFY_ACTIVITY_NAME", "Working Time")
 PTO_ACTIVITY_NAME = os.environ.get("CLOCKIFY_PTO_ACTIVITY_NAME", "PTO")
+PTO_ACTIVITY_TASK_ID = os.environ.get("CLOCKIFY_PTO_ACTIVITY_TASK_ID") or None
 HOLIDAY_DESCRIPTION = os.environ.get("CLOCKIFY_HOLIDAY_DESCRIPTION", "Public holiday — Argentina")
 TZ = os.environ.get("CLOCKIFY_TZ", "America/Bogota")
 START_TIME = os.environ.get("CLOCKIFY_START_TIME", "08:00")
@@ -205,15 +207,15 @@ def resolve_entry_plan(
     proj = project_name
     client = client_name
     if not proj:
-        proj = PTO_PROJECT_NAME or PROJECT_NAME if is_pto else PROJECT_NAME
+        proj = (PTO_PROJECT_NAME or PROJECT_NAME) if is_pto else PROJECT_NAME
     if not client:
-        client = CLIENT_NAME
+        client = PTO_CLIENT_NAME if is_pto and PTO_CLIENT_NAME else CLIENT_NAME
 
     project_id = find_project_id(ws_id, proj, client)
     client_label, project_label = clib.project_client_names(
         ws_id, project_id, hdrs, requests, list_projects,
     )
-    task_id = find_task_id(ws_id, project_id, activity_name, required=False)
+    task_id = PTO_ACTIVITY_TASK_ID if is_pto and activity_name == PTO_ACTIVITY_NAME and PTO_ACTIVITY_TASK_ID else find_task_id(ws_id, project_id, activity_name, required=False)
     tag_ids = None
     tag_id_labels = []
     if tag_name:

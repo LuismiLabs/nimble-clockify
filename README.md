@@ -32,8 +32,10 @@ pip install requests
    CLOCKIFY_CLIENT_NAME=Nexstar Media Inc
    CLOCKIFY_PROJECT_NAME=NexStar
    CLOCKIFY_ACTIVITY_NAME=Working Time
+   CLOCKIFY_PTO_CLIENT_NAME=        # optional; e.g. Nimble if holidays/PTO live there
    CLOCKIFY_PTO_PROJECT_NAME=          # optional; holidays use this if set
    CLOCKIFY_PTO_ACTIVITY_NAME=PTO
+   CLOCKIFY_PTO_ACTIVITY_TASK_ID=      # optional; use if Clockify blocks task listing on the PTO project
    CLOCKIFY_HOLIDAY_DESCRIPTION=Public holiday — Argentina
    CLOCKIFY_TZ=America/Bogota
    CLOCKIFY_START_TIME=08:00
@@ -41,6 +43,8 @@ pip install requests
    ```
 
    The script automatically loads `.env` on startup, so you don’t need to export these manually.
+
+If holidays/PTO live under a different client/project than your normal work, set both `CLOCKIFY_PTO_CLIENT_NAME` and `CLOCKIFY_PTO_PROJECT_NAME`. If Clockify blocks task listing on that PTO project, also set `CLOCKIFY_PTO_ACTIVITY_TASK_ID` to the PTO task id.
 
 2. **Configure via env vars (optional)**
 
