@@ -55,9 +55,21 @@ Every entry uses exactly these fields:
 | **Upskilling** | Training, courses, certifications. |
 | **Coaching & Enablement** | Coaching, mentoring, knowledge sharing. |
 | **Recruiting & Interviews** | Hiring, screening, technical evaluations. |
+| **Sales & Proposals** | Drafting and reviewing proposals, SOWs, and contracts. |
 | **Idle** | Bench time — no active project, between engagements. |
 | **PTO** | Paid time off. **Requires a tag:** Vacation, Holiday, or Personal (includes sick days). Must be HR-authorized first. |
 | **UTO** | Unpaid time off. No tag needed. Must be HR-authorized first. |
+
+### Nimble — Fast Foundation activities
+
+These apply only to Nimble's internal Fast Foundation work, never to client-billable engagements:
+
+| Activity | What it covers |
+|----------|----------------|
+| **Fast Foundation - Custom Dev** | Hands-on custom development within the monthly pre-allocated hours; default for Fast Foundation development. |
+| **Fast Foundation - Custom Dev - Authorized Over Budget** | Custom development explicitly approved to exceed the monthly allocation; requires prior client authorization. |
+| **Fast Foundation - Reporting** | Progress reports, documentation, and status updates for Fast Foundation. |
+| **Fast Foundation - Upgrade Cycle** | Scheduled upgrade and maintenance work included in the service. |
 
 ### Tags (only 4 — most entries have no tag)
 

@@ -123,8 +123,8 @@ python main.py --from 2025-01-01 --to 2025-01-31 --desc "PHP development"
 
 The script uses the public [ArgentinaDatos](https://api.argentinadatos.com/v1/feriados) API (no API key). For each day in the range:
 
-- If it’s an **Argentina public holiday** → the entry is created with description **"Holiday"** and the tag set in `HOLIDAY_TAG_NAME` (e.g. `Vacation/Holiday`).
-- Otherwise → your `--desc` and `TAG_NAME` (e.g. `PHP`) are used.
+- If it’s an **Argentina public holiday** → the entry is created with Activity **PTO**, Tag **Holiday**, and the configured holiday description (by default, `Public holiday — Argentina`). If PTO lives outside the normal client project, configure `CLOCKIFY_PTO_CLIENT_NAME`, `CLOCKIFY_PTO_PROJECT_NAME`, and, when task discovery is blocked, `CLOCKIFY_PTO_ACTIVITY_TASK_ID`.
+- Otherwise → the entry uses the configured client/project/activity and the requested description, with no tag unless authorized overtime was explicitly requested.
 
 Only weekdays are processed unless you use `--include-weekends`.
 
